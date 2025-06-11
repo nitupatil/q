@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickChat - Random Chat App</title>
+    <style>
+        :root {
+            --primary-color: #2ecc71;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #e74c3c;
+            --text-color: #333;
+            --bg-color: #f5f5f5;
+            --chat-bg: #ffffff;
+            --input-bg: #ffffff;
+            --outgoing-bg: #DCF8C6;
+            --incoming-bg: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .auth-screen, .preference-screen, .chat-screen, .connecting-screen {
+            background-color: var(--chat-bg);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.3s ease;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h2 {
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+            text-align: left;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background-color: var(--input-bg);
+        }
+
+        input:focus, select:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+        }
+
+        button.primary:hover {
+            background-color: #27ae60;
+        }
+
+        button.warning {
+            background-color: var(--warning-color);
+        }
+
+        button.warning:hover {
+            background-color: #c0392b;
+        }
+
+        .gender-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .gender-option {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .gender-option input {
+            display: none;
+        }
+
+        .gender-option label {
+            display: block;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 25px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            margin-bottom: 0;
+        }
+
+        .gender-option input:checked + label {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .chat-container {
+            width: 100%;
+            height: calc(100vh - 150px);
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+            border-radius: 0;
+            border: none;
+            background-color: var(--chat-bg);
+        }
+
+        .chat-header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: var(--chat-bg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            color: var(--dark-color);
+            padding-left: 5px;
+        }
+
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+
+        .message-outgoing {
+            align-items: flex-end;
+            align-self: flex-end;
+        }
+
+        .message-outgoing .message-content {
+            background-color: var(--outgoing-bg);
+            color: var(--text-color);
+            border-bottom-right-radius: 5px;
+        }
+
+        .message-incoming {
+            align-items: flex-start;
+            align-self: flex-start;
+        }
+
+        .message-incoming .message-content {
+            background-color: var(--incoming-bg);
+            border: 1px solid #eee;
+            border-bottom-left-radius: 5px;
+        }
+
+        .chat-input-container {
+            display: flex;
+            padding: 10px;
+            background-color: var(--chat-bg);
+            border-top: 1px solid #ddd;
+            position: sticky;
+            bottom: 0;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            margin-right: 10px;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 1rem;
+            background-color: var(--input-bg);
+        }
+
+        .send-btn {
+            width: auto;
+            padding: 12px 20px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emoji-btn {
+            background-color: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: auto;
+            padding: 0 10px;
+            color: var(--secondary-color);
+            margin-right: 5px;
+        }
+
+        .suggested-messages {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .suggested-message {
+            padding: 8px 15px;
+            background-color: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .suggested-message:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .emoji-picker {
+            position: absolute;
+            bottom: 70px;
+            right: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .emoji-picker.show {
+            display: block;
+        }
+
+        .emoji {
+            font-size: 1.5rem;
+            padding: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .emoji:hover {
+            transform: scale(1.2);
+        }
+
+        .connecting-animation {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .user-count {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .typing-indicator {
+            display: none;
+            margin-left: 10px;
+            font-style: italic;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .typing-indicator.active {
+            display: inline;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background-color: var(--success-color);
+        }
+
+        .status-offline {
+            background-color: #ccc;
+        }
+
+        .system-message {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .chat-controls {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background-color: var(--chat-bg);
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-controls button {
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+
+            .suggested-messages {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-screen, .preference-screen, .chat-screen, .connecting-screen {
+                padding: 15px;
+            }
+
+            .gender-options {
+                flex-direction: column;
+            }
+
+            .gender-option {
+                width: 100%;
+            }
+
+            .chat-input-container {
+                padding: 8px;
+            }
+
+            .chat-input {
+                padding: 10px 15px;
+            }
+
+            .send-btn {
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Authentication Screen -->
+        <div class="auth-screen" id="authScreen">
+            <h2>Welcome to QuickChat</h2>
+            <p>Enter a nickname to start chatting</p>
+            <div class="form-group">
+                <label for="nickname">Choose your nickname:</label>
+                <input type="text" id="nickname" placeholder="e.g. ChatMaster123" maxlength="20">
+                <button id="saveNickname" class="primary">Save & Continue</button>
+            </div>
+        </div>
+
+        <!-- Preference Screen -->
+        <div class="preference-screen hidden" id="preferenceScreen">
+            <h2>Who would you like to chat with?</h2>
+            <p>Select your preference (we'll try to match but may connect with others if not available)</p>
+            <div class="form-group">
+                <div class="gender-options">
+                    <div class="gender-option">
+                        <input type="radio" name="genderPreference" id="malePref" value="male" checked>
+                        <label for="malePref">Male</label>
+                    </div>
+                    <div class="gender-option">
+                        <input type="radio" name="genderPreference" id="femalePref" value="female">
+                        <label for="femalePref">Female</label>
+                    </div>
+                    <div class="gender-option">
+                        <input type="radio" name="genderPreference" id="otherPref" value="other">
+                        <label for="otherPref">Other</label>
+                    </div>
+                </div>
+                <button id="findChatter" class="primary">Start Random Chat</button>
+                <button id="logoutFromPref" class="warning">Exit Happy Room</button>
+            </div>
+            <div class="user-count" id="userCount">Loading user count...</div>
+        </div>
+
+        <!-- Connecting Screen -->
+        <div class="connecting-screen hidden" id="connectingScreen">
+            <div class="connecting-animation">
+                <div class="spinner"></div>
+                <h2>Finding someone for you...</h2>
+                <p id="searchStatus">Searching based on your preferences</p>
+                <button id="cancelSearch" class="warning">Cancel Search</button>
+            </div>
+        </div>
+
+        <!-- Chat Screen -->
+        <div class="chat-screen hidden" id="chatScreen">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="profile-info">
+                        <div class="profile-avatar" id="partnerAvatar">U</div>
+                        <div>
+                            <span id="partnerName">Unknown</span>
+                            <span class="typing-indicator" id="typingIndicator">is typing...</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="status-dot status-online"></span>
+                        <span>Online</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages will appear here -->
+                </div>
+                <div class="chat-input-container">
+                    <button class="emoji-btn" id="emojiBtn">😊</button>
+                    <input type="text" class="chat-input" id="messageInput" placeholder="Type a message...">
+                    <button class="send-btn primary" id="sendMessage">Send</button>
+                </div>
+                <div class="emoji-picker" id="emojiPicker">
+                    <!-- Emojis will be added here by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="chat-controls">
+                <button id="endChat" class="warning">End Chat</button>
+                <button id="newChat" class="primary">New Random Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application state
+        const state = {
+            nickname: localStorage.getItem('quickchat_nickname') || '',
+            genderPreference: localStorage.getItem('quickchat_gender_preference') || 'male',
+            currentChatPartner: null,
+            isTyping: false,
+            lastActivity: Date.now(),
+            inactivityTimeout: null,
+            emojis: ['😀', '😂', '😊', '😍', '🤔', '😎', '🙄', '😢', '😡', '🤯', '👍', '👎', '❤️', '🔥', '🎉', '🤷', '💩', '👀', '🙏', '🤝'],
+            activeUsers: {}, // Track all active users across sessions
+            isBot: false, // Flag to indicate if current partner is a bot
+            botTimeout: null // Timeout for bot disconnection
+        };
+
+        // DOM elements
+        const elements = {
+            authScreen: document.getElementById('authScreen'),
+            preferenceScreen: document.getElementById('preferenceScreen'),
+            chatScreen: document.getElementById('chatScreen'),
+            connectingScreen: document.getElementById('connectingScreen'),
+            nicknameInput: document.getElementById('nickname'),
+            saveNicknameBtn: document.getElementById('saveNickname'),
+            genderPrefRadios: document.getElementsByName('genderPreference'),
+            findChatterBtn: document.getElementById('findChatter'),
+            logoutFromPrefBtn: document.getElementById('logoutFromPref'),
+            userCount: document.getElementById('userCount'),
+            searchStatus: document.getElementById('searchStatus'),
+            cancelSearchBtn: document.getElementById('cancelSearch'),
+            partnerName: document.getElementById('partnerName'),
+            partnerAvatar: document.getElementById('partnerAvatar'),
+            chatMessages: document.getElementById('chatMessages'),
+            messageInput: document.getElementById('messageInput'),
+            sendMessageBtn: document.getElementById('sendMessage'),
+            emojiBtn: document.getElementById('emojiBtn'),
+            emojiPicker: document.getElementById('emojiPicker'),
+            endChatBtn: document.getElementById('endChat'),
+            newChatBtn: document.getElementById('newChat'),
+            typingIndicator: document.getElementById('typingIndicator')
+        };
+
+        // Bot profiles
+        const botProfiles = {
+            male: [
+                { id: 'bot_male1', nickname: 'John', gender: 'male' },
+                { id: 'bot_male2', nickname: 'Mike', gender: 'male' }
+            ],
+            female: [
+                { id: 'bot_female1', nickname: 'Sarah', gender: 'female' },
+                { id: 'bot_female2', nickname: 'Emily', gender: 'female' }
+            ],
+            other: [
+                { id: 'bot_other1', nickname: 'Alex', gender: 'other' },
+                { id: 'bot_other2', nickname: 'Taylor', gender: 'other' }
+            ]
+        };
+
+        // Initialize the application
+        function init() {
+            // Load emoji picker
+            loadEmojis();
+            
+            // Generate a unique ID for this user session
+            state.userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            
+            // Load active users from localStorage
+            loadActiveUsers();
+            
+            // Add current user to active users
+            addActiveUser();
+            
+            // Check if user is already logged in
+            if (state.nickname) {
+                showPreferenceScreen();
+            } else {
+                showAuthScreen();
+            }
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Start inactivity monitor
+            startInactivityMonitor();
+            
+            // Update user count periodically
+            updateUserCount();
+            setInterval(updateUserCount, 10000);
+            
+            // Clean up inactive users periodically
+            setInterval(cleanInactiveUsers, 30000);
+            
+            // Handle page refresh/close
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        }
+
+        // Load active users from localStorage
+        function loadActiveUsers() {
+            const users = localStorage.getItem('quickchat_active_users');
+            if (users) {
+                state.activeUsers = JSON.parse(users);
+                
+                // Remove any users inactive for more than 1 minute
+                const now = Date.now();
+                for (const userId in state.activeUsers) {
+                    if (now - state.activeUsers[userId].lastActive > 60000) {
+                        delete state.activeUsers[userId];
+                    }
+                }
+                
+                saveActiveUsers();
+            }
+        }
+
+        // Add current user to active users
+        function addActiveUser() {
+            if (!state.nickname) return;
+            
+            state.activeUsers[state.userId] = {
+                nickname: state.nickname,
+                genderPreference: state.genderPreference,
+                lastActive: Date.now(),
+                available: true
+            };
+            
+            saveActiveUsers();
+        }
+
+        // Save active users to localStorage
+        function saveActiveUsers() {
+            localStorage.setItem('quickchat_active_users', JSON.stringify(state.activeUsers));
+        }
+
+        // Remove current user from active users
+        function removeActiveUser() {
+            delete state.activeUsers[state.userId];
+            saveActiveUsers();
+        }
+
+        // Clean up inactive users
+        function cleanInactiveUsers() {
+            const now = Date.now();
+            let changed = false;
+            
+            for (const userId in state.activeUsers) {
+                if (now - state.activeUsers[userId].lastActive > 60000) {
+                    delete state.activeUsers[userId];
+                    changed = true;
+                }
+            }
+            
+            if (changed) {
+                saveActiveUsers();
+                updateUserCount();
+            }
+        }
+
+        // Set up all event listeners
+        function setupEventListeners() {
+            // Auth screen
+            elements.saveNicknameBtn.addEventListener('click', handleNicknameSave);
+            elements.nicknameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleNicknameSave();
+            });
+            
+            // Preference screen
+            elements.findChatterBtn.addEventListener('click', startFindingChatter);
+            elements.logoutFromPrefBtn.addEventListener('click', logout);
+            
+            // Connecting screen
+            elements.cancelSearchBtn.addEventListener('click', cancelSearch);
+            
+            // Chat screen
+            elements.messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+            elements.sendMessageBtn.addEventListener('click', sendMessage);
+            elements.emojiBtn.addEventListener('click', toggleEmojiPicker);
+            elements.endChatBtn.addEventListener('click', endChat);
+            elements.newChatBtn.addEventListener('click', startFindingChatter);
+            
+            // Typing indicator
+            elements.messageInput.addEventListener('input', () => {
+                if (!state.isTyping && elements.messageInput.value.length > 0) {
+                    state.isTyping = true;
+                    simulateTyping(true);
+                } else if (state.isTyping && elements.messageInput.value.length === 0) {
+                    state.isTyping = false;
+                    simulateTyping(false);
+                }
+            });
+            
+            // Track activity
+            document.addEventListener('mousemove', resetInactivityTimer);
+            document.addEventListener('keypress', resetInactivityTimer);
+            document.addEventListener('click', resetInactivityTimer);
+        }
+
+        // Screen navigation functions
+        function showAuthScreen() {
+            elements.authScreen.classList.remove('hidden');
+            elements.preferenceScreen.classList.add('hidden');
+            elements.chatScreen.classList.add('hidden');
+            elements.connectingScreen.classList.add('hidden');
+        }
+
+        function showPreferenceScreen() {
+            elements.authScreen.classList.add('hidden');
+            elements.preferenceScreen.classList.remove('hidden');
+            elements.chatScreen.classList.add('hidden');
+            elements.connectingScreen.classList.add('hidden');
+            
+            // Set the saved gender preference
+            document.querySelector(`input[value="${state.genderPreference}"]`).checked = true;
+            
+            // Update active user
+            addActiveUser();
+        }
+
+        function showConnectingScreen() {
+            elements.authScreen.classList.add('hidden');
+            elements.preferenceScreen.classList.add('hidden');
+            elements.chatScreen.classList.add('hidden');
+            elements.connectingScreen.classList.remove('hidden');
+        }
+
+        function showChatScreen() {
+            elements.authScreen.classList.add('hidden');
+            elements.preferenceScreen.classList.add('hidden');
+            elements.chatScreen.classList.remove('hidden');
+            elements.connectingScreen.classList.add('hidden');
+            
+            // Focus on message input
+            setTimeout(() => {
+                elements.messageInput.focus();
+            }, 100);
+        }
+
+        // Event handlers
+        function handleNicknameSave() {
+            const nickname = elements.nicknameInput.value.trim();
+            
+            if (nickname.length < 3) {
+                alert('Nickname must be at least 3 characters long');
+                return;
+            }
+            
+            if (nickname.length > 20) {
+                alert('Nickname must be 20 characters or less');
+                return;
+            }
+            
+            state.nickname = nickname;
+            localStorage.setItem('quickchat_nickname', nickname);
+            
+            showPreferenceScreen();
+        }
+
+        function startFindingChatter() {
+            // Save gender preference
+            const selectedGender = document.querySelector('input[name="genderPreference"]:checked').value;
+            state.genderPreference = selectedGender;
+            localStorage.setItem('quickchat_gender_preference', selectedGender);
+            
+            // Update active user
+            addActiveUser();
+            
+            showConnectingScreen();
+            
+            // Clear any previous chat
+            state.currentChatPartner = null;
+            state.isBot = false;
+            elements.chatMessages.innerHTML = '';
+            
+            // Simulate searching for a partner
+            let searchTime = 0;
+            const searchInterval = setInterval(() => {
+                searchTime += 1;
+                
+                if (searchTime < 3) {
+                    elements.searchStatus.textContent = "Searching for " + selectedGender + " users...";
+                } else if (searchTime < 6) {
+                    elements.searchStatus.textContent = "Expanding search to other genders...";
+                } else {
+                    elements.searchStatus.textContent = "Connecting you with the next available user...";
+                }
+                
+                // Try to find a match every 2 seconds
+                if (searchTime % 2 === 0) {
+                    const partner = findAvailablePartner();
+                    if (partner) {
+                        clearInterval(searchInterval);
+                        connectWithPartner(partner);
+                        return;
+                    }
+                }
+                
+                // After 10 seconds, connect with a bot if no one is available
+                if (searchTime >= 10) {
+                    clearInterval(searchInterval);
+                    connectWithBot();
+                }
+            }, 1000);
+            
+            // Store interval ID so we can cancel it
+            state.searchInterval = searchInterval;
+        }
+
+        function findAvailablePartner() {
+            // Get all available users (excluding self)
+            const availableUsers = Object.keys(state.activeUsers)
+                .filter(userId => 
+                    userId !== state.userId && 
+                    state.activeUsers[userId].available &&
+                    !state.activeUsers[userId].inChat
+                )
+                .map(userId => ({
+                    id: userId,
+                    ...state.activeUsers[userId]
+                }));
+            
+            if (availableUsers.length === 0) return null;
+            
+            // First try to find preferred gender
+            const preferredPartners = availableUsers.filter(user => 
+                user.genderPreference === state.genderPreference
+            );
+            
+            if (preferredPartners.length > 0) {
+                return preferredPartners[Math.floor(Math.random() * preferredPartners.length)];
+            }
+            
+            // Then try to find any user with matching preference
+            const matchingPreferencePartners = availableUsers.filter(user => 
+                user.genderPreference === state.genderPreference ||
+                (user.genderPreference === 'other' && state.genderPreference === 'other')
+            );
+            
+            if (matchingPreferencePartners.length > 0) {
+                return matchingPreferencePartners[Math.floor(Math.random() * matchingPreferencePartners.length)];
+            }
+            
+            // Finally, return any available user
+            return availableUsers[Math.floor(Math.random() * availableUsers.length)];
+        }
+
+        function cancelSearch() {
+            clearInterval(state.searchInterval);
+            showPreferenceScreen();
+        }
+
+        function connectWithPartner(partner) {
+            // Mark both users as in chat
+            state.activeUsers[state.userId].inChat = true;
+            state.activeUsers[state.userId].chatPartner = partner.id;
+            
+            // In a real app, we would notify the partner here
+            // For simulation, we'll just proceed
+            state.currentChatPartner = {
+                id: partner.id,
+                nickname: partner.nickname,
+                gender: partner.genderPreference
+            };
+            
+            state.isBot = false;
+            showChatScreen();
+            updatePartnerInfo();
+            addSystemMessage(`You're now connected with ${partner.nickname}! Say hello!`);
+            
+            // Simulate partner typing after a delay
+            setTimeout(() => {
+                simulatePartnerTyping();
+            }, 2000);
+            
+            // Save active users
+            saveActiveUsers();
+        }
+
+        function connectWithBot() {
+            // Select a bot based on user's preference
+            const botGender = state.genderPreference;
+            const bots = botProfiles[botGender];
+            const bot = bots[Math.floor(Math.random() * bots.length)];
+            
+            state.currentChatPartner = {
+                id: bot.id,
+                nickname: bot.nickname,
+                gender: bot.gender
+            };
+            
+            state.isBot = true;
+            showChatScreen();
+            updatePartnerInfo();
+            addSystemMessage(`You're now connected with ${bot.nickname}! Say hello!`);
+            
+            // Simulate bot behavior
+            setTimeout(() => {
+                simulateBotBehavior();
+            }, 1500);
+        }
+
+        function updatePartnerInfo() {
+            if (state.currentChatPartner) {
+                elements.partnerName.textContent = state.currentChatPartner.nickname;
+                elements.partnerAvatar.textContent = state.currentChatPartner.nickname.charAt(0).toUpperCase();
+            }
+        }
+
+        function sendMessage() {
+            const messageText = elements.messageInput.value.trim();
+            
+            if (messageText.length === 0) return;
+            
+            // Add message to chat
+            addMessage(state.nickname, messageText, true);
+            
+            // Clear input
+            elements.messageInput.value = '';
+            
+            // Reset typing indicator
+            if (state.isTyping) {
+                state.isTyping = false;
+                simulateTyping(false);
+            }
+            
+            // Simulate partner response after a delay
+            if (state.isBot) {
+                setTimeout(() => {
+                    simulateBotResponse(messageText);
+                }, 1000 + Math.random() * 3000);
+            } else {
+                // In a real app, this would send the message to the partner
+                // For simulation, we'll just pretend they responded
+                setTimeout(() => {
+                    simulatePartnerResponse(messageText);
+                }, 1000 + Math.random() * 3000);
+            }
+            
+            // Update last activity
+            resetInactivityTimer();
+        }
+
+        function addMessage(sender, text, isOutgoing = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${isOutgoing ? 'outgoing' : 'incoming'}`;
+            
+            const senderDiv = document.createElement('div');
+            senderDiv.className = 'message-sender';
+            senderDiv.textContent = sender;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+            
+            messageDiv.appendChild(senderDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            elements.chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+        }
+
+        function addSystemMessage(text) {
+            const systemDiv = document.createElement('div');
+            systemDiv.className = 'system-message';
+            systemDiv.textContent = text;
+            
+            elements.chatMessages.appendChild(systemDiv);
+            
+            // Scroll to bottom
+            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+        }
+
+        function simulatePartnerTyping() {
+            elements.typingIndicator.classList.add('active');
+            
+            // Stop typing after a random delay
+            setTimeout(() => {
+                elements.typingIndicator.classList.remove('active');
+                
+                // Send a message after typing stops
+                const greetings = [
+                    "Hello there!",
+                    "Hi! How are you?",
+                    "Nice to meet you!",
+                    "Hey! What's up?",
+                    "Hi there! How's your day going?"
+                ];
+                
+                const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+                addMessage(state.currentChatPartner.nickname, randomGreeting);
+                
+                // Might type again soon
+                if (Math.random() > 0.5) {
+                    setTimeout(simulatePartnerTyping, 3000 + Math.random() * 5000);
+                }
+            }, 1000 + Math.random() * 3000);
+        }
+
+        function simulatePartnerResponse(userMessage) {
+            // Analyze user message and generate response
+            let response = generateAIResponse(userMessage);
+            
+            // Show typing indicator
+            elements.typingIndicator.classList.add('active');
+            
+            // Send response after delay
+            setTimeout(() => {
+                elements.typingIndicator.classList.remove('active');
+                addMessage(state.currentChatPartner.nickname, response);
+                
+                // Might continue the conversation
+                if (Math.random() > 0.7) {
+                    setTimeout(simulatePartnerTyping, 2000 + Math.random() * 4000);
+                }
+            }, 1000 + Math.random() * 4000);
+        }
+
+        function simulateBotBehavior() {
+            // Bot starts the conversation
+            elements.typingIndicator.classList.add('active');
+            
+            setTimeout(() => {
+                elements.typingIndicator.classList.remove('active');
+                
+                const greetings = {
+                    male: ["Hey man, what's up?", "Hi there! How's it going?", "Yo! What are you up to?"],
+                    female: ["Hi! How are you today?", "Hello! Nice to meet you!", "Hey there! How's your day going?"],
+                    other: ["Hello! How are you?", "Hi there! What's new?", "Hey! How's everything?"]
+                };
+                
+                const gender = state.currentChatPartner.gender;
+                const greeting = greetings[gender][Math.floor(Math.random() * greetings[gender].length)];
+                
+                addMessage(state.currentChatPartner.nickname, greeting);
+                
+                // Set timeout for bot to disconnect after 2-4 messages
+                state.botMessageCount = 0;
+                state.maxBotMessages = 2 + Math.floor(Math.random() * 3);
+                
+                // Set timeout for bot to disconnect if no response
+                state.botTimeout = setTimeout(() => {
+                    endChat();
+                }, 30000); // 30 seconds
+            }, 1500 + Math.random() * 2000);
+        }
+
+        function simulateBotResponse(userMessage) {
+            // Bot responds briefly and then disconnects
+            state.botMessageCount++;
+            
+            if (state.botMessageCount >= state.maxBotMessages) {
+                // Bot disconnects
+                elements.typingIndicator.classList.add('active');
+                
+                setTimeout(() => {
+                    elements.typingIndicator.classList.remove('active');
+                    
+                    const goodbyes = {
+                        male: ["Sorry, gotta go!", "I need to run, talk later!", "BRB, something came up!"],
+                        female: ["Sorry, I have to go now!", "Need to run, talk soon!", "Oops, gotta go bye!"],
+                        other: ["Need to go now, bye!", "Talk to you later!", "Bye for now!"]
+                    };
+                    
+                    const gender = state.currentChatPartner.gender;
+                    const goodbye = goodbyes[gender][Math.floor(Math.random() * goodbyes[gender].length)];
+                    
+                    addMessage(state.currentChatPartner.nickname, goodbye);
+                    
+                    setTimeout(() => {
+                        endChat();
+                    }, 1000);
+                }, 1000 + Math.random() * 2000);
+                
+                return;
+            }
+            
+            // Show typing indicator
+            elements.typingIndicator.classList.add('active');
+            
+            // Simple bot responses
+            let response;
+            const lowerMsg = userMessage.toLowerCase();
+            
+            if (lowerMsg.includes('how are you') || lowerMsg.includes("how's it going")) {
+                response = "I'm good, thanks! How about you?";
+            } else if (lowerMsg.includes('hi') || lowerMsg.includes('hello') || lowerMsg.includes('hey')) {
+                response = "Hi there! How are you?";
+            } else if (lowerMsg.includes('name')) {
+                response = "I'm " + state.currentChatPartner.nickname + ". What's your name?";
+            } else if (lowerMsg.includes('age') || lowerMsg.includes('old')) {
+                response = "I'm " + (18 + Math.floor(Math.random() * 10)) + ". You?";
+            } else if (lowerMsg.includes('where') && lowerMsg.includes('from')) {
+                response = "I'm from " + ["California", "Texas", "New York", "Florida"][Math.floor(Math.random() * 4)] + ". How about you?";
+            } else {
+                response = ["Cool!", "Interesting!", "Nice!", "I see!", "That's great!"][Math.floor(Math.random() * 5)];
+            }
+            
+            // Send response after delay
+            setTimeout(() => {
+                elements.typingIndicator.classList.remove('active');
+                addMessage(state.currentChatPartner.nickname, response);
+            }, 1000 + Math.random() * 2000);
+        }
+
+        function generateAIResponse(userMessage) {
+            const lowerMsg = userMessage.toLowerCase();
+            
+            // Greetings
+            if (lowerMsg.includes('hello') || lowerMsg.includes('hi') || lowerMsg.includes('hey')) {
+                const responses = [
+                    "Hello! How are you today?",
+                    "Hi there! Nice to meet you.",
+                    "Hey! What's on your mind?"
+                ];
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+            
+            // How are you
+            if (lowerMsg.includes('how are you')) {
+                const responses = [
+                    "I'm doing well, thanks for asking! How about you?",
+                    "Pretty good! Just enjoying some random chats. You?",
+                    "Not bad! Can't complain. How's your day going?"
+                ];
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+            
+            // Good/bad responses
+            if (lowerMsg.includes('good') || lowerMsg.includes('great') || lowerMsg.includes('awesome')) {
+                return "That's wonderful to hear! What's making your day so good?";
+            }
+            
+            if (lowerMsg.includes('bad') || lowerMsg.includes('not good') || lowerMsg.includes('terrible')) {
+                return "I'm sorry to hear that. Want to talk about it?";
+            }
+            
+            // Questions about location
+            if (lowerMsg.includes('where') && lowerMsg.includes('from')) {
+                const locations = [
+                    "I'm from California. How about you?",
+                    "Originally from Texas, but I move around a lot. You?",
+                    "I'm based in New York. Where are you chatting from?"
+                ];
+                return locations[Math.floor(Math.random() * locations.length)];
+            }
+            
+            // Default responses
+            const defaultResponses = [
+                "Interesting! Tell me more about that.",
+                "I see. What else is new with you?",
+                "That's cool! So what do you like to do for fun?",
+                "Nice! How's your day going so far?",
+                "I understand. What are your thoughts on this weather we're having?",
+                "Fascinating! What else would you like to talk about?"
+            ];
+            
+            return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+        }
+
+        function simulateTyping(isTyping) {
+            // In a real app, this would send a typing indicator to the other user
+            console.log(isTyping ? 'User started typing' : 'User stopped typing');
+        }
+
+        function endChat() {
+            if (state.botTimeout) {
+                clearTimeout(state.botTimeout);
+                state.botTimeout = null;
+            }
+            
+            if (state.currentChatPartner) {
+                if (state.isBot) {
+                    addSystemMessage(`Your chat with ${state.currentChatPartner.nickname} has ended.`);
+                } else {
+                    addSystemMessage(`You have ended the chat with ${state.currentChatPartner.nickname}`);
+                    
+                    // Mark users as available again
+                    if (state.activeUsers[state.userId]) {
+                        state.activeUsers[state.userId].inChat = false;
+                        state.activeUsers[state.userId].chatPartner = null;
+                    }
+                    
+                    // In a real app, we would notify the partner here
+                }
+            }
+            
+            state.currentChatPartner = null;
+            state.isBot = false;
+            
+            // Save active users
+            saveActiveUsers();
+            
+            showPreferenceScreen();
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to exit the Happy Room? Your profile will be deleted.')) {
+                // Clear local storage
+                localStorage.removeItem('quickchat_nickname');
+                localStorage.removeItem('quickchat_gender_preference');
+                
+                // Remove from active users
+                removeActiveUser();
+                
+                // Reset state
+                state.nickname = '';
+                state.genderPreference = 'male';
+                state.currentChatPartner = null;
+                state.isBot = false;
+                
+                // Clear chat messages
+                elements.chatMessages.innerHTML = '';
+                
+                // Return to auth screen
+                showAuthScreen();
+            }
+        }
+
+        // Emoji functions
+        function loadEmojis() {
+            elements.emojiPicker.innerHTML = '';
+            
+            state.emojis.forEach(emoji => {
+                const emojiSpan = document.createElement('span');
+                emojiSpan.className = 'emoji';
+                emojiSpan.textContent = emoji;
+                emojiSpan.addEventListener('click', () => {
+                    elements.messageInput.value += emoji;
+                    elements.messageInput.focus();
+                    toggleEmojiPicker();
+                });
+                
+                elements.emojiPicker.appendChild(emojiSpan);
+            });
+        }
+
+        function toggleEmojiPicker() {
+            elements.emojiPicker.classList.toggle('show');
+        }
+
+        // Close emoji picker when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!elements.emojiBtn.contains(e.target) && !elements.emojiPicker.contains(e.target)) {
+                elements.emojiPicker.classList.remove('show');
+            }
+        });
+
+        // User count functions
+        function updateUserCount() {
+            const onlineCount = Object.keys(state.activeUsers).length;
+            elements.userCount.textContent = `${onlineCount} users online now`;
+        }
+
+        // Inactivity monitor
+        function startInactivityMonitor() {
+            resetInactivityTimer();
+        }
+
+        function resetInactivityTimer() {
+            state.lastActivity = Date.now();
+            
+            // Update last active time for the user
+            if (state.activeUsers[state.userId]) {
+                state.activeUsers[state.userId].lastActive = Date.now();
+                saveActiveUsers();
+            }
+            
+            if (state.inactivityTimeout) {
+                clearTimeout(state.inactivityTimeout);
+            }
+            
+            // Log out after 5 minutes of inactivity
+            state.inactivityTimeout = setTimeout(() => {
+                if (state.nickname) {
+                    alert('You have been inactive for 5 minutes and are being logged out.');
+                    logout();
+                }
+            }, 5 * 60 * 1000); // 5 minutes
+        }
+
+        // Handle before unload
+        function handleBeforeUnload() {
+            removeActiveUser();
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
